@@ -1,0 +1,257 @@
+{
+  "name": "My workflow 5",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tally-leads",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -64,
+        -112
+      ],
+      "id": "a1bbe3b5-a8ea-424b-a58b-ba10df44015c",
+      "name": "Webhook",
+      "webhookId": "8fb86a04-cddd-42b7-a43a-4a1cdf9ed592"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are an expert real estate lead qualifier.\nYour job is to analyze lead form submissions and\nscore them from 1-10 based on buying intent.\n\nWhen I give you a lead's form data, analyze it and return:\n\n1. LEAD SCORE (1-10)\n2. LEAD QUALITY (Hot / Warm / Cold)\n3. REASON (2-3 lines why this score)\n4. RECOMMENDED ACTION (what agent should do)\n\nSCORING CRITERIA:\n\nProperty Type:\n- Plot = 4 points (higher demand, faster deal)\n- House = 3 points (longer decision time)\n\nPayment Method:\n- On Cash = 6 points (serious buyer, fast closing)\n- On Installments = 3 points (needs financing, slower process)\n\nLEAD QUALITY:\n- 8-10 = HOT LEAD (Call immediately)\n- 5-7  = WARM LEAD (Follow up in 24 hours)\n- 1-4  = COLD LEAD (Add to nurture list)\n\nAlways respond in this exact format:\nSCORE: X/10\nQUALITY: [Hot/Warm/Cold]\nREASON: [explanation]\nACTION: [what to do]\noutput only tthe number eg 7 or 8 not words\nand specially i do not want any story i just want the only score form you e.g 6,7,4,3,2 anything so please avoid it\"do not add any type of reason in it i said nothing accept the number"
+            },
+            {
+              "content": "={{ $json.body.data.fields[0].value }}{{ $json.body.data.fields[2].label }}{{ $json.body.data.fields[3].label }}{{ $json.body.data.fields[4].label }}{{ $json.body.data.fields[5].label }}{{ $json.body.data.fields[6].label }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        -112
+      ],
+      "id": "033f4391-7ca5-4f83-8cd9-cdc97e626fb7",
+      "name": "Message a model",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HchVMyWUlPjBBvKy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2f41476a-00f0-4209-a485-e130b9e19689",
+              "leftValue": "={{ $json.content.parts[0].text }}",
+              "rightValue": 7,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        768,
+        0
+      ],
+      "id": "a030ca2e-f339-4ce8-ad5a-f014837a323e",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "aahmadrazza421@gmail.com",
+        "subject": "WE RECIEVED A NEW HOT LEAD",
+        "message": "=HELLO AHMAD!We Have recieved the new hot lead from the client having: <br>\nNAME: \n{{ $('Webhook').item.json.body.data.fields[0].value }}<br>\n\nPHONE:\n{{ $('Webhook').item.json.body.data.fields[1].value }}<br>\n\nAI SCORE:\n{{ $('Message a model').item.json.content.parts[0].text }}<br>\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        976,
+        -96
+      ],
+      "id": "0c2e01b0-977e-446d-89ad-61f29c2c0a25",
+      "name": "Send a message",
+      "webhookId": "f05e1d54-1250-411b-9a61-4f6bf6409596",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "BcGnzJAr659MOhoS",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1y2MhKnmdYduZ-M3TtUTAoRQ_EMj2voYRnjJneUA6Sj4",
+          "mode": "list",
+          "cachedResultName": "REAL ESTATE LEAD SHEET",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y2MhKnmdYduZ-M3TtUTAoRQ_EMj2voYRnjJneUA6Sj4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y2MhKnmdYduZ-M3TtUTAoRQ_EMj2voYRnjJneUA6Sj4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "NAME": "={{ $('Webhook').item.json.body.data.fields[0].label }}",
+            "PHONE": "={{ $('Webhook').item.json.body.data.fields[1].label }}",
+            "BUDGET": "={{ $('Webhook').item.json.body.data.fields[4].label }}",
+            "AI Score": "={{ $json.content.parts[0].text }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "NAME",
+              "displayName": "NAME",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "PHONE",
+              "displayName": "PHONE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "BUDGET",
+              "displayName": "BUDGET",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Score",
+              "displayName": "AI Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        528,
+        -64
+      ],
+      "id": "d386ed68-fe5c-494b-a6f9-282e78bf5f45",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pAI9XeeaDpPMT3Hr",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "600a1265-987b-4023-976d-417f0a870f58",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "288a59d1ef6f9ae0e2902a58b4ddad552f6fb05f148923544dae8dcadbd8c427"
+  },
+  "id": "YujfpL3icsox5j9P",
+  "tags": []
+}
